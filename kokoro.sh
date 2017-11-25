@@ -1,5 +1,5 @@
 #!/bin/bash
-KokoroShVersion=1
+KokoroShVersion=2
 KokoroRc="${HOME}/.kokororc"
 
 #######################################
