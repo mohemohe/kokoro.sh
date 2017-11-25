@@ -133,12 +133,21 @@ function getChannelMessage() {
                         --header "X-Access-Token: ${ACCESS_TOKEN}" \
                         "https://kokoro.io/api/v1/channels/${channelId}/messages" \
                      2> /dev/null)
+  
   echo "${messages}" \
-    | jq -r "reverse | .[] | { display_name: .display_name, raw_content: .raw_content, published_at: .published_at} | .display_name, .published_at, .raw_content" \
-    | while read name; read date; read message; [ "$name$date$message" ]; do {
-        echo "${name} ${date}"
-        echo "  ${message}"
-        echo
+    | jq  -c "reverse | .[] | { display_name: .display_name, raw_content: .raw_content, published_at: .published_at}" \
+    | while read -r json; do {
+        displayName=$(echo "${json}" | jq  -r ".display_name")
+        publishedAt=$(echo "${json}" | jq  -r ".published_at" | xargs -I_ date -ujf %FT%TZ "_" +%s | xargs -I_ date -r "_" +%Y/%m/%d.%H:%M:%S)
+        rawContent=$(echo "${json}" | jq  -r ".raw_content")
+
+echo -e "\033[0;32m${publishedAt}\033[0;m \033[0;33m${displayName}\033[0;m"
+cat <<EOS
+
+${rawContent}
+
+EOS
+        horizontalLine
       } done
 }
 
@@ -161,6 +170,21 @@ function postChannelMessage() {
         --data-urlencode "message=${2}" \
         "https://kokoro.io/api/v1/channels/${channelId}/messages" \
     &> /dev/null
+}
+
+#######################################
+# 画面幅いっぱいに罫線を引く
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+function horizontalLine() {
+  for i in $(seq 1 $(tput cols)); do
+    echo -n '─'
+  done
 }
 
 #######################################
