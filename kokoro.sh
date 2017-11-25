@@ -163,13 +163,48 @@ EOS
 #######################################
 function postChannelMessage() {
   local channelId="$(getChannelList "${1}")"
-  curl -X POST \
+  local result=$(curl -X POST \
         --header 'Content-Type: application/x-www-form-urlencoded' \
         --header 'Accept: application/json' \
         --header "X-Access-Token: ${ACCESS_TOKEN}" \
         --data-urlencode "message=${2}" \
         "https://kokoro.io/api/v1/channels/${channelId}/messages" \
-    &> /dev/null
+    2> /dev/null)
+
+  if [[ "$?" != "0" ]]; then {
+    errorLog メッセージ投稿に失敗しました
+  } fi
+  if [[ "$(echo "${result}" | jq -r '.message')" == "Server Error" ]]; then {
+    errorLog メッセージ投稿に失敗しました
+  } fi
+}
+
+#######################################
+# 指定したチャンネルを作成する
+# Globals:
+#   ACCESS_TOKEN: kokoro.ioのアクセストークン
+# Arguments:
+#   $1: チャンネル名
+#   $2: 概要
+# Returns:
+#   None
+#######################################
+function createPublicChannel() {
+  local result=$(curl -X POST \
+        --header 'Content-Type: application/x-www-form-urlencoded' \
+        --header 'Accept: application/json' \
+        --header "X-Access-Token: ${ACCESS_TOKEN}" \
+        --data-urlencode "channel[channel_name]=${1}" \
+        --data-urlencode "channel[description]=${2}" \
+        "https://kokoro.io/api/v1/channels" \
+    2> /dev/null)
+
+  if [[ "$?" != "0" ]]; then {
+    errorLog チャンネル作成に失敗しました
+  } fi
+  if [[ "$(echo "${result}" | jq -r '.message')" == "Server Error" ]]; then {
+    errorLog チャンネル作成に失敗しました
+  } fi
 }
 
 #######################################
@@ -213,10 +248,10 @@ function man() {
   local me=$(basename "${0}")
 
   cat << EOS 1>&2
-  ${me} get channel           : チャンネルリスト取得
-  ${me} get [name]            : 指定チャンネルのメッセージを取得
-  ${me} post channel [name]   : チャンネル作成（未実装）
-  ${me} post [name] [message] : 指定チャンネルにメッセージを投稿
+  ${me} get channel                       : チャンネルリスト取得
+  ${me} get [name]                        : 指定チャンネルのメッセージを取得
+  ${me} post channel [name] [description] : パブリックチャンネル作成
+  ${me} post [name] [message]             : 指定チャンネルにメッセージを投稿
 EOS
 }
 
@@ -260,7 +295,7 @@ function main() {
 
     "post" ) {
       if [[ "${channel}" == "channel" ]]; then {
-        createPublicChannel "${name}"
+        createPublicChannel "${name}" "${message}"
       } else {
         postChannelMessage "${channel}" "${message}"
       } fi
