@@ -1,5 +1,5 @@
 #!/bin/bash
-KokoroShVersion=2
+KokoroShVersion=3
 KokoroRc="${HOME}/.kokororc"
 
 #######################################
@@ -138,7 +138,7 @@ function getChannelMessage() {
     | jq  -c "reverse | .[] | { display_name: .display_name, raw_content: .raw_content, published_at: .published_at}" \
     | while read -r json; do {
         displayName=$(echo "${json}" | jq  -r ".display_name")
-        publishedAt=$(echo "${json}" | jq  -r ".published_at" | xargs -I_ date -ujf %FT%TZ "_" +%s | xargs -I_ date -r "_" +%Y/%m/%d.%H:%M:%S)
+        publishedAt=$(echo "${json}" | jq  -r ".published_at" | xargs -I_ date -d "_" +%Y/%m/%d.%H:%M:%S)
         rawContent=$(echo "${json}" | jq  -r ".raw_content")
 
 echo -e "\033[0;32m${publishedAt}\033[0;m \033[0;33m${displayName}\033[0;m"
