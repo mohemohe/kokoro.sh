@@ -1,5 +1,6 @@
 #!/bin/bash
-KokoroShVersion=3
+FILENAME=$(basename "${0}")
+KokoroShVersion=5
 KokoroRc="${HOME}/.kokororc"
 
 #######################################
@@ -32,7 +33,7 @@ function loadConfig() {
 function checkConfig() {
   if [[ "${ACCESS_TOKEN}" == "" ]]; then {
     errorLog "'${KokoroRc}' の 'ACCESS_TOKEN' が空っぽだよ💢"
-    exit 1
+    eeeeexxxxxxiiiiiiiittttttt 1
   } fi
 }
 
@@ -53,7 +54,7 @@ EOS
 
   errorLog "'${KokoroRc}' にコンフィグファイルを作ったから 'ACCESS_TOKEN' にアクセストークンを入れてね♥"
 
-  exit 1
+  eeeeexxxxxxiiiiiiiittttttt 1
 }
 
 #######################################
@@ -126,7 +127,7 @@ function getChannelList() {
 #   None
 #######################################
 function getChannelMessage() {
-  local channelId="$(getChannelList "${1}")"
+  local channelId="${1}"
   local messages=$(curl -X GET \
                         --header 'Content-Type: application/x-www-form-urlencoded' \
                         --header 'Accept: application/json' \
@@ -162,7 +163,7 @@ EOS
 #   None
 #######################################
 function postChannelMessage() {
-  local channelId="$(getChannelList "${1}")"
+  local channelId="${1}"
   local result=$(curl -X POST \
         --header 'Content-Type: application/x-www-form-urlencoded' \
         --header 'Accept: application/json' \
@@ -245,14 +246,81 @@ function errorLog() {
 #   None
 #######################################
 function man() {
-  local me=$(basename "${0}")
+  me="${FILENAME}"
 
   cat << EOS 1>&2
-  ${me} get channel                       : チャンネルリスト取得
-  ${me} get [name]                        : 指定チャンネルのメッセージを取得
-  ${me} post channel [name] [description] : パブリックチャンネル作成
-  ${me} post [name] [message]             : 指定チャンネルにメッセージを投稿
+${FILENAME} v${KokoroShVersion}
+$(horizontalLine)
+
+  ${FILENAME} get                               : チャンネルリスト取得
+  ${FILENAME} get [id]                          : 指定チャンネルのメッセージを取得
+
+  ${FILENAME} post channel [name] [description] : パブリックチャンネル作成
+  ${FILENAME} post [id] [message]               : 指定チャンネルにメッセージを投稿
+
+  ${FILENAME} update                            : ${FILENAME} を最新バージョンにアップデート
+
+$(horizontalLine)
 EOS
+}
+
+#######################################
+# バージョン確認する
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+checkVersion() {
+    local remoteVersion=$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)
+    if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
+        cat << EOS
+
+${FILENAME} v${remoteVersion} がリリースされています
+'${FILENAME} update' でアップデートします
+EOS
+    } fi
+}
+
+#######################################
+# セルフアップデート
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+update() {
+    local nextKokoroSh="$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null)"
+    local remoteVersion="$(echo "${nextKokoroSh}" | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)"
+    if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
+        echo "${nextKokoroSh}" >| "$(which "${FILENAME}")"
+    
+        if [[ "$?" == "0" ]]; then {
+            echo アップデートに成功しました
+            exit 0
+        } else {
+            echo アップデートに失敗しました
+            exit 1
+        } fi
+    } fi
+}
+
+#######################################
+# おわり
+# Globals:
+#   None
+# Arguments:
+#   $1: 終了コード
+# Returns:
+#   None
+#######################################
+function eeeeexxxxxxiiiiiiiittttttt() {
+  checkVersion
+  exit "$1"
 }
 
 #######################################
@@ -279,14 +347,14 @@ function main() {
 
   if [[ "$(checkCommand)" == "1" ]]; then {
     errorLog "動作に必要なコマンドがないよ"
-    exit 1
+    eeeeexxxxxxiiiiiiiittttttt 1
   } fi
 
   loadConfig
 
   case "${mode}" in 
     "get" ) {
-      if [[ "${channel}" == "channel" ]]; then {
+      if [[ "${channel}" == "" ]]; then {
         getChannelList
       } else {
         getChannelMessage "${channel}"
@@ -301,12 +369,16 @@ function main() {
       } fi
     } ;;
 
+    "update" ) {
+        update
+    } ;;
+
     * ) {
       man
-      exit 1
+      eeeeexxxxxxiiiiiiiittttttt 1
     } ;;
   esac
 
-  exit 0
+  eeeeexxxxxxiiiiiiiittttttt 0
 }
 main $*
