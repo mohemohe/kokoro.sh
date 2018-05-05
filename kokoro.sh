@@ -1,6 +1,6 @@
 #!/bin/bash
 FILENAME=$(basename "${0}")
-KokoroShVersion=5
+KokoroShVersion=6
 KokoroRc="${HOME}/.kokororc"
 
 #######################################
@@ -255,8 +255,9 @@ $(horizontalLine)
   ${FILENAME} get                               : チャンネルリスト取得
   ${FILENAME} get [id]                          : 指定チャンネルのメッセージを取得
 
-  ${FILENAME} post channel [name] [description] : パブリックチャンネル作成
   ${FILENAME} post [id] [message]               : 指定チャンネルにメッセージを投稿
+
+  ${FILENAME} new channel [name] [description] : パブリックチャンネル作成
 
   ${FILENAME} update                            : ${FILENAME} を最新バージョンにアップデート
 
@@ -274,14 +275,14 @@ EOS
 #   None
 #######################################
 checkVersion() {
-    local remoteVersion=$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)
-    if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
-        cat << EOS
+  local remoteVersion=$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)
+  if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
+    cat << EOS
 
 ${FILENAME} v${remoteVersion} がリリースされています
 '${FILENAME} update' でアップデートします
 EOS
-    } fi
+  } fi
 }
 
 #######################################
@@ -294,19 +295,19 @@ EOS
 #   None
 #######################################
 update() {
-    local nextKokoroSh="$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null)"
-    local remoteVersion="$(echo "${nextKokoroSh}" | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)"
-    if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
-        echo "${nextKokoroSh}" >| "$(which "${FILENAME}")"
-    
-        if [[ "$?" == "0" ]]; then {
-            echo アップデートに成功しました
-            exit 0
-        } else {
-            echo アップデートに失敗しました
-            exit 1
-        } fi
+  local nextKokoroSh="$(curl -L 'https://raw.githubusercontent.com/mohemohe/kokoro.sh/master/kokoro.sh' 2>/dev/null)"
+  local remoteVersion="$(echo "${nextKokoroSh}" | grep 'KokoroShVersion' | head -1 | cut -d'=' -f2)"
+  if [[ "${KokoroShVersion}" != "${remoteVersion}" ]]; then {
+    echo "${nextKokoroSh}" >| "$(which "${FILENAME}")"
+  
+    if [[ "$?" == "0" ]]; then {
+      echo アップデートに成功しました
+      exit 0
+    } else {
+      echo アップデートに失敗しました
+      exit 1
     } fi
+  } fi
 }
 
 #######################################
@@ -362,11 +363,11 @@ function main() {
     } ;;
 
     "post" ) {
-      if [[ "${channel}" == "channel" ]]; then {
-        createPublicChannel "${name}" "${message}"
-      } else {
-        postChannelMessage "${channel}" "${message}"
-      } fi
+      postChannelMessage "${channel}" "${message}"
+    } ;;
+
+    "new" ) {
+      createPublicChannel "${name}" "${message}"
     } ;;
 
     "update" ) {
